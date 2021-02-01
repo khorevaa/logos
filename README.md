@@ -15,7 +15,7 @@ This project is a wrapper around the excellent logging framework zap.
 * Appenders
     - `Console`, *write to console*
     - `File`, *any log file*
-    - `gelfupd`, *greylog logger*
+    - `GelfUpd`, *greylog logger*
     - `RollingFile`, *rolling file writing & compress*
 * Encoders
     - `Console`, *colorful & formatting text for console*
@@ -72,7 +72,7 @@ appenders:
       encoder:
         json:
 
-loggerConfigs:
+loggers:
   root:
     level: info
     appender_refs:
@@ -113,7 +113,7 @@ appenders:
             info_level: blue+b
             debug_level: green+b
 
-loggerConfigs:
+loggers:
   root:
     level: debug
     appender_refs:

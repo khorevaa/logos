@@ -20,7 +20,7 @@ appenders:
            info_level: blue+b
            debug_level: green+b
 
-loggerConfigs:
+loggers:
  root:
    level: debug
    appender_refs:
@@ -55,7 +55,7 @@ appenders:
       encoder:
         json:
 
-loggerConfigs:
+loggers:
   root:
     level: info
     appender_refs:
@@ -83,7 +83,7 @@ appenders:
             info_level: blue+b
             debug_level: green+b
 
-loggerConfigs:
+loggers:
   root:
     level: debug
     appender_refs:

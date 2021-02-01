@@ -1,6 +1,8 @@
 package config
 
-import "github.com/khorevaa/logos/internal/common"
+import (
+	"github.com/khorevaa/logos/internal/common"
+)
 
 const DefaultConfig = `
 appenders:
@@ -9,16 +11,11 @@ appenders:
       target: stdout
       encoder:
         console:
-          time_encoder: ISO8601
-loggerConfigs:
+loggers:
   root:
     level: info
     appender_refs:
       - CONSOLE
-  logger:
-    - name: stdlog
-      level: info
-      add_caller: true
 
 scan: false
 scan_period: 1m
@@ -26,7 +23,7 @@ scan_period: 1m
 
 type Config struct {
 	Appenders map[string][]*common.Config `logos-config:"appenders"`
-	Loggers   Loggers                     `logos-config:"loggerConfigs"`
+	Loggers   Loggers                     `logos-config:"loggers"`
 }
 
 type ScanConfig struct {

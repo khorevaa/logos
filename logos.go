@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -104,6 +105,17 @@ func init() {
 		panic(err)
 	}
 
+	envConfig, err := parseConfigFromEnv()
+	if err != nil && debug {
+		fmt.Printf("logos loading config from env err: %s", err)
+	}
+	if envConfig != nil {
+		rawConfig, err = common.MergeConfigs(rawConfig, envConfig)
+		if err != nil {
+			fmt.Printf("logos merge configs err: %s", err)
+		}
+	}
+
 	manager, err = newLogManager(rawConfig)
 
 	if err != nil {
@@ -119,6 +131,37 @@ func init() {
 		Sync()
 	}()
 
+}
+func parseConfigFromEnv() (*common.Config, error) {
+	configData := os.Getenv("LOGOS_CONFIG")
+	if configData == "" {
+		return nil, ErrEnvConfigNotSet
+	}
+	return parseConfigFromString(configData)
+}
+
+func parseConfigFromString(configData string) (*common.Config, error) {
+
+	newConfig := common.NewConfig()
+
+	data := strings.Split(configData, ";")
+
+	for _, strData := range data {
+
+		pathValue := strings.Split(strData, "=")
+		value := ""
+		path := pathValue[0]
+		if len(pathValue) == 2 {
+			value = pathValue[1]
+		}
+		err := newConfig.SetString(path, -1, value)
+		if debug {
+			fmt.Errorf("error loading config from path %s err <%s>", path, err)
+		}
+
+	}
+
+	return newConfig, nil
 }
 
 func InitWithConfigContent(content string) error {

@@ -124,6 +124,10 @@ func (c *Config) HasField(name string) bool {
 	return c.access().HasField(name)
 }
 
+func (c *Config) FlattenedKeys(options ...ucfg.Option) []string {
+	return c.access().FlattenedKeys(options...)
+}
+
 func (c *Config) CountField(name string) (int, error) {
 	return c.access().CountField(name)
 }
