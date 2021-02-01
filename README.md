@@ -26,31 +26,111 @@ This project is a wrapper around the excellent logging framework zap.
     - `UpdateLogger(LogName string, logger *zap.Logger*)`, *hot update core logger*
     - `RedirectStdLog()`, *redirect standard log package*
 * High Performance
-    - [Significantly faster][high-performance] than all other json loggers.
+    - [Significantly faster][high-performance] json loggers.
 
-## Interfaces
+## How to use
 
-### Logger
+### Quick start
+
 ```go
-// DefaultLogger is the global logger.
+package main
+
+import (
+  
+  "github.com/khorevaa/logos"
+)
+
+func main() {
+
+  log := logos.New("<your-package-name>") // like github.com/khorevaa/logos
+  log.Info("This is me first log. Hello world logging systems")
+
+
+}
+
 ```
 
-### Json  Writer
+### Json Writer
 
-To log a machine-friendly, use `json`. [![playground][play-pretty-img]][play-pretty]
+To log a machine-friendly, use `json`.
 
 ```go
+package main
 
+import (
+  "errors"
+  "github.com/khorevaa/logos"
+)
+
+func main() {
+	
+	rawConfig := `
+appenders:
+  console:
+    - name: CONSOLE
+      target: stdout
+      encoder:
+        json:
+
+loggerConfigs:
+  root:
+    level: info
+    appender_refs:
+      - CONSOLE
+`
+	
+    logos.InitWithConfigContent(rawConfig)	
+	
+    log := logos.New("<your-package-name>") // like github.com/khorevaa/logos
+    log.Info("This is me first log. Hello world logging systems")
+
+
+}
 ```
 
 ### Pretty Console Writer
 
-To log a human-friendly, colorized output, use `Console`. [![playground][play-pretty-img]][play-pretty]
+To log a human-friendly, colorized output, use `Console`. 
 
 ```go
+package main
 
+import (
+  "errors"
+  "github.com/khorevaa/logos"
+)
+
+func main() {
+
+  rawConfig := `
+appenders:
+  console:
+    - name: CONSOLE
+      target: stdout
+      encoder:
+        console:
+          color_scheme:
+            info_level: blue+b
+            debug_level: green+b
+
+loggerConfigs:
+  root:
+    level: debug
+    appender_refs:
+      - CONSOLE
+`
+
+  logos.InitWithConfigContent(rawConfig)
+
+  log := logos.New("<your-package-name>") // like github.com/khorevaa/logos
+  log.Info("This is me first log. Hello world logging systems")
+
+  err := errors.New("log system error")
+  log.Debug("This is me first error", logos.Any("err", err))
+
+}
 ```
-![Pretty logging][pretty-img]
+![img.png](img/img.png)
 > Note: pretty logging also works on windows console
 
 ### High Performance
@@ -148,13 +228,13 @@ A Performance result as below, for daily benchmark results see [github actions][
 [stability-img]: https://img.shields.io/badge/stability-stable-green.svg
 [high-performance]: https://github.com/khorevaa/logos#high-performance
 [play-simple-img]: https://img.shields.io/badge/playground-NGV25aBKmYH-29BEB0?style=flat&logo=go
-[play-simple]: https://play.golang.org/p/NGV25aBKmYH
+[play-simple]: https://play.golang.org/p/NGV25aBKmYH2
 [play-customize-img]: https://img.shields.io/badge/playground-emTsJJKUGXZ-29BEB0?style=flat&logo=go
-[play-customize]: https://play.golang.org/p/emTsJJKUGXZ
+[play-customize]: https://play.golang.org/p/emTsJJKUGXZ2
 [play-file-img]: https://img.shields.io/badge/playground-nS--ILxFyhHM-29BEB0?style=flat&logo=go
 [play-file]: https://play.golang.org/p/nS-ILxFyhHM
 [play-pretty-img]: https://img.shields.io/badge/playground-SCcXG33esvI-29BEB0?style=flat&logo=go
-[play-pretty]: https://play.golang.org/p/SCcXG33esvI
+[play-pretty]: https://play.golang.org/p/SCcXG33esvI2
 [pretty-img]: https://user-images.githubusercontent.com/195836/101993218-cda82380-3cf3-11eb-9aa2-b8b1c832a72e.png
 [play-formatting-img]: https://img.shields.io/badge/playground-UmJmLxYXwRO-29BEB0?style=flat&logo=go
 [play-formatting]: https://play.golang.org/p/UmJmLxYXwRO
