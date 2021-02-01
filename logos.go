@@ -125,9 +125,9 @@ func InitWithConfigContent(content string) error {
 	initLocker.Lock()
 	defer initLocker.Unlock()
 
-	if explicitInited {
-		return errors.New("logos is explicit inited")
-	}
+	//if explicitInited {
+	//	return errors.New("logos is explicit inited")
+	//}
 
 	if debug {
 		fmt.Println("logos InitWithConfigContent:\n" + content)
@@ -143,7 +143,7 @@ func InitWithConfigContent(content string) error {
 		return err
 	}
 
-	explicitInited = true
+	//explicitInited = true
 
 	return nil
 }
