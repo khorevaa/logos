@@ -64,7 +64,9 @@ func TestConfigFrom(t *testing.T) {
 			defConfig, err := common.NewConfigFrom(DefaultConfig)
 
 			cfg, err = common.MergeConfigs(defConfig, cfg)
-			t.Error(err)
+			if err != nil {
+				t.Fatalf(err.Error())
+			}
 
 		})
 	}
