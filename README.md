@@ -221,7 +221,7 @@ A Performance result as below, for daily benchmark results see [github actions][
 [pkg]: https://godoc.org/github.com/khorevaa/logos
 [report-img]: https://goreportcard.com/badge/github.com/khorevaa/logos
 [report]: https://goreportcard.com/report/github.com/khorevaa/logos
-[build-img]: https://github.com/khorevaa/logos/workflows/build/badge.svg
+[build-img]: https://github.com/khorevaa/logos/workflows/goreleaser/badge.svg
 [build]: https://github.com/khorevaa/logos/actions
 [cov-img]: http://gocover.io/_badge/github.com/khorevaa/logos
 [cov]: https://gocover.io/github.com/khorevaa/logos
