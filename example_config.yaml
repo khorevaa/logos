@@ -1,0 +1,15 @@
+appenders:
+  console:
+    - name: CONSOLE
+      target: stdout
+      encoder:
+        console:
+loggers:
+  root:
+    level: info
+    appender_refs:
+      - CONSOLE
+  logger:
+    - name: stdlog
+      level: info
+      add_caller: true
