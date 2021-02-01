@@ -149,6 +149,7 @@ func InitWithConfigContent(content string) error {
 }
 
 func New(name string) Logger {
+	manager.Sync()
 	return manager.NewLogger(name)
 }
 func SetLevel(name string, level zapcore.Level) {
@@ -161,4 +162,12 @@ func UpdateLogger(name string, logger *zap.Logger) {
 
 func Sync() {
 	_ = manager.Sync()
+}
+
+func RedirectStdLog() func() {
+	return manager.RedirectStdLog()
+}
+
+func CancelRedirectStdLog() {
+	manager.CancelRedirectStdLog()
 }

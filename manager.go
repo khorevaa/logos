@@ -25,6 +25,8 @@ type logManager struct {
 	rootLevel        zapcore.Level
 	rootLogger       *warpLogger
 	rootLoggerConfig *loggerConfig
+
+	cancelRedirectStdLog func()
 }
 
 func newLogManager(rawConfig *common.Config) (*logManager, error) {
@@ -250,10 +252,20 @@ func (m *logManager) newCoreLoggerConfig(name string) *loggerConfig {
 	return loggerConfig
 }
 
-func (m *logManager) RedirectStdLog() {
+func (m *logManager) RedirectStdLog() func() {
 
 	stdlog := m.getLogger("stdlog", false)
-	zap.RedirectStdLog(stdlog.defLogger)
+	m.cancelRedirectStdLog = zap.RedirectStdLog(stdlog.defLogger)
+	return m.cancelRedirectStdLog
+}
+
+func (m *logManager) CancelRedirectStdLog() {
+
+	if m.cancelRedirectStdLog == nil {
+		return
+	}
+
+	m.cancelRedirectStdLog()
 }
 
 func (m *logManager) Update(rawConfig *common.Config) error {
@@ -300,7 +312,9 @@ func (m *logManager) Update(rawConfig *common.Config) error {
 		return true
 	})
 
-	m.RedirectStdLog()
+	if m.cancelRedirectStdLog != nil {
+		m.cancelRedirectStdLog = m.RedirectStdLog()
+	}
 
 	return nil
 }
