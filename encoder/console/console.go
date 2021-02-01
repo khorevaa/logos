@@ -13,7 +13,7 @@ var defaultTimestampFormat = "2006-01-02T15:04:05.000Z0700"
 var baseTimestamp = time.Now()
 
 var defaultConfig = Config{
-	ConsoleSeparator: "\t",
+	ConsoleSeparator: " ",
 	TimestampFormat:  defaultTimestampFormat,
 	LineEnding:       "\n",
 }

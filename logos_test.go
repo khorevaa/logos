@@ -3,7 +3,6 @@ package logos
 import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-	stdlog "log"
 	"testing"
 )
 
@@ -33,7 +32,7 @@ func TestNew(t *testing.T) {
 			SetLevel(tt.logName, zap.DebugLevel)
 
 			for _, text := range tt.text {
-				stdlog.Println(text)
+				//stdlog.Println(text)
 				log.Info(text)
 				log.Debug(text)
 			}
