@@ -67,8 +67,6 @@ loggerConfigs:
 	log := logos.New("<your-package-name>") // like github.com/khorevaa/logos
 	log.Info("This is me first log. Hello world logging systems")
 
-	// Output:
-	// .+"logger":"<your-package-name>","msg":"This is me first log. Hello world logging systems"}
 }
 func ExampleNew_with_color_scheme() {
 

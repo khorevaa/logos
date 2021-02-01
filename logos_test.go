@@ -6,46 +6,12 @@ import (
 	"testing"
 )
 
-func TestNew(t *testing.T) {
-
-	tests := []struct {
-		name    string
-		logName string
-		text    []string
-	}{
-		{
-			"simple",
-			"github.com/khorevaa/logos",
-			[]string{"hello world", "hello"},
-		},
-		{
-			"simple",
-			"github.com/v8platform",
-			[]string{"hello world", "hello"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			log := New(tt.logName)
-
-			SetLevel(tt.logName, zap.DebugLevel)
-
-			for _, text := range tt.text {
-				//stdlog.Println(text)
-				log.Info(text)
-				log.Debug(text)
-			}
-		})
-	}
-}
-
 func TestInitWithConfigContent(t *testing.T) {
 	const newConfig = `
 appenders:
   console:
     - name: CONSOLE
-      target: stdout
+      target: discard
       #no_color: true
       encoder:
         console:
@@ -75,17 +41,17 @@ loggerConfigs:
           level: debug
 
 `
+	err := InitWithConfigContent(newConfig)
+
+	//l.SetLLevel(OffLevel)
+	assert.Nil(t, err)
+
 	l := New("github.com/logger")
 	l.Info("hello")
 	l.Debug("world")
 	l2 := New("github.com/logger/v1")
 	l2.Info("hello world test/logger/v1", zap.String("key", "val"))
 	l2.Debug("hello world test/logger/v1")
-
-	err := InitWithConfigContent(newConfig)
-
-	//l.SetLLevel(OffLevel)
-	assert.Nil(t, err)
 
 	//err = InitWithConfigContent(newConfig)
 	//assert.NotNil(t, err)
