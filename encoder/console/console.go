@@ -154,13 +154,26 @@ func (e *Encoder) writeContext(defColor uint16, out *buffer.Buffer, extra []zapc
 	if len(extra) == 0 {
 		return
 	}
-	//e.buf.AppendByte('{')
-	enc := getColoredEncoder(defColor, e.Schema, e.DisableColors)
-	defer putColoredEncoder(enc)
+
+	var enc zapcore.ObjectEncoder
+	if !e.DisableColors {
+		enc = getColoredEncoder(defColor, e.Schema, e.DisableColors)
+		defer putColoredEncoder(enc.(*coloredEncoder))
+	} else {
+		enc = e
+	}
 
 	addFields(enc, extra)
-	if enc.buf.Len() > 0 {
-		out.Write(enc.buf.Bytes())
+	var buf *buffer.Buffer
+	switch t := enc.(type) {
+	case *Encoder:
+		buf = t.buf
+	case *coloredEncoder:
+		buf = t.buf
+	}
+
+	if buf.Len() > 0 {
+		out.Write(buf.Bytes())
 	}
 
 }
