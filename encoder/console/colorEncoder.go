@@ -18,11 +18,12 @@ var poolColoredEncoder = sync.Pool{
 	},
 }
 
-func getColoredEncoder(lvlColor uint16, scheme ColorScheme) *coloredEncoder {
+func getColoredEncoder(lvlColor uint16, scheme ColorScheme, disableColor bool) *coloredEncoder {
 	enc := poolColoredEncoder.Get().(*coloredEncoder)
 	enc.buf = bufferpool.Get()
 	enc.scheme = scheme
 	enc.entLevelColor = lvlColor
+	enc.disableColor = disableColor
 	return enc
 }
 
@@ -51,6 +52,7 @@ func putColoredEncoder(enc *coloredEncoder) {
 	enc.scheme = defaultScheme
 	enc.buf.Free()
 	enc.entLevelColor = NoColor
+	enc.disableColor = false
 	enc.EncodeDuration = nil
 	enc.EncodeTime = nil
 	poolColoredEncoder.Put(enc)

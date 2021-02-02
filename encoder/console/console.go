@@ -149,13 +149,13 @@ func (e *Encoder) appendTimeInfo(buf *buffer.Buffer, entry zapcore.Entry) {
 
 }
 
-func (e Encoder) writeContext(defColor uint16, out *buffer.Buffer, extra []zapcore.Field) {
+func (e *Encoder) writeContext(defColor uint16, out *buffer.Buffer, extra []zapcore.Field) {
 
 	if len(extra) == 0 {
 		return
 	}
 	//e.buf.AppendByte('{')
-	enc := getColoredEncoder(defColor, e.Schema)
+	enc := getColoredEncoder(defColor, e.Schema, e.DisableColors)
 	defer putColoredEncoder(enc)
 
 	addFields(enc, extra)
@@ -165,13 +165,13 @@ func (e Encoder) writeContext(defColor uint16, out *buffer.Buffer, extra []zapco
 
 }
 
-func (e Encoder) addSeparatorIfNecessary(line *buffer.Buffer) {
+func (e *Encoder) addSeparatorIfNecessary(line *buffer.Buffer) {
 	if line.Len() > 0 {
 		line.AppendString(e.ConsoleSeparator)
 	}
 }
 
-func (e Encoder) colorizeText(text string, color uint16) string {
+func (e *Encoder) colorizeText(text string, color uint16) string {
 
 	if e.DisableColors {
 		return text
