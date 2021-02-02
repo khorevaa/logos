@@ -220,11 +220,10 @@ loggers:
 
 ### Jobs and Timing events
 
-Jobs serve three functions:
+Jobs serve some functions:
 
 * Jobs record a timing (eg, it took 21ms to complete this job)
 * Jobs record a status (eg, did the job complete successfully or was there an error?)
-* Jobs group instrumentation inside that job together so that you can analyze it later.
 
 Let's say you're writing a web service that processes JSON requests/responses. You might write something like this:
 
@@ -235,8 +234,7 @@ import (
 )
 var log = logos.New("github.com/khorevaa/rest-api") // like github.com/khorevaa/logos
 func main() {
-	// setup stream with sinks
-	stream.AddSink(&health.WriterSink{os.Stdout})
+
 	http.HandleFunc("/users", getUsers)
 }
 
