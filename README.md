@@ -426,6 +426,59 @@ loggers:
 	}
 }
 
+func BenchmarkLogosColor(b *testing.B) {
+
+  const newConfig = `
+appenders:
+  console:
+    - name: CONSOLE
+      target: discard
+      encoder:
+        console:
+loggers:
+  root:
+    level: info
+    appender_refs:
+      - CONSOLE
+`
+  err := logos.InitWithConfigContent(newConfig)
+  if err != nil {
+    //panic(err)
+  }
+
+  logger := logos.New("benchmark")
+  for i := 0; i < b.N; i++ {
+    logger.Info(fakeMessage, zap.String("foo", "bar"), zap.Int("int", 42))
+  }
+}
+
+
+func BenchmarkLogosJson(b *testing.B) {
+
+  const newConfig = `
+appenders:
+  console:
+    - name: CONSOLE
+      target: discard
+      encoder:
+        json:
+loggers:
+  root:
+    level: info
+    appender_refs:
+      - CONSOLE
+`
+  err := logos.InitWithConfigContent(newConfig)
+  if err != nil {
+    //panic(err)
+  }
+
+  logger := logos.New("benchmark")
+  for i := 0; i < b.N; i++ {
+    logger.Info(fakeMessage, zap.String("foo", "bar"), zap.Int("int", 42))
+  }
+}
+
 func BenchmarkZap(b *testing.B) {
 	logger := zap.New(zapcore.NewCore(
 		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
