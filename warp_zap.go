@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var StackTraceLevelEnabler = zap.NewAtomicLevelAt(zapcore.ErrorLevel)
+var StackTraceLevelEnabler = zap.NewAtomicLevelAt(zapcore.PanicLevel)
 
 func newZapCore(config map[string]zapcore.Level, appenders map[string]*appender.Appender) zapcore.Core {
 

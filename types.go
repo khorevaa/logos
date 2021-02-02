@@ -26,6 +26,10 @@ type Logger interface {
 	Sync() error
 
 	Sugar() SugaredLogger
+
+	Job(name string, kvs ...map[string]string) *Job
+
+	EventEmitter() Emitter
 }
 
 type SugaredLogger interface {
@@ -120,4 +124,8 @@ type SugaredLogger interface {
 	Sync() error
 
 	Desugar() Logger
+
+	Job(name string, kvs ...map[string]string) *Job
+
+	EventEmitter() Emitter
 }

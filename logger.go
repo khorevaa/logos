@@ -2,6 +2,7 @@ package logos
 
 import (
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -16,6 +17,7 @@ func newLogger(name string, logger *zap.Logger) *warpLogger {
 		Name:      name,
 		defLogger: logger,
 		mu:        sync.RWMutex{},
+		emitLevel: InfoLevel,
 	}
 
 	l.SetUsedAt(time.Now())
@@ -30,6 +32,7 @@ type warpLogger struct {
 	sugaredLogger *zap.SugaredLogger
 	mu            sync.RWMutex
 
+	emitLevel zapcore.Level
 	_usedAt   uint32 // atomic
 	_locked   uint32
 	_lockWait sync.WaitGroup

@@ -141,6 +141,7 @@ func (e *coloredEncoder) AppendInt8(val int8) {
 
 func (e *coloredEncoder) AppendString(str string) {
 	e.addElementSeparator()
+	str = strconv.Quote(str)
 	e.appendColoredString(str, e.scheme.String)
 }
 

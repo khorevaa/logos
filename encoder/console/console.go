@@ -89,23 +89,26 @@ func (e Encoder) EncodeEntry(ent zapcore.Entry, fields []zapcore.Field) (*buffer
 	e.appendTimeInfo(line, ent)
 
 	line.AppendString(e.colorizeText(ent.Level.CapitalString(), lvlColor))
-	e.addSeparatorIfNecessary(line)
 
 	//pp.Println(e.DisableNaming, ent.LoggerName)
 	if !e.DisableNaming && len(ent.LoggerName) > 0 {
 
-		line.AppendString(e.colorizeText(ent.LoggerName, e.Schema.LogNaming))
 		e.addSeparatorIfNecessary(line)
+		line.AppendString(e.colorizeText(ent.LoggerName, e.Schema.LogNaming))
+
 	}
 
 	if ent.Caller.Defined {
 
-		line.AppendString(e.colorizeText(ent.Caller.TrimmedPath(), e.Schema.Nil))
 		e.addSeparatorIfNecessary(line)
+		line.AppendString(e.colorizeText(ent.Caller.TrimmedPath(), e.Schema.Nil))
 
 	}
 
-	line.AppendString(e.colorizeText(ent.Message, lvlColor))
+	if len(ent.Message) > 0 {
+		e.addSeparatorIfNecessary(line)
+		line.AppendString(e.colorizeText(ent.Message, lvlColor))
+	}
 	//e.addSeparatorIfNecessary(line)
 	// Add any structured context.
 	e.writeContext(lvlColor, line, fields)
