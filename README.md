@@ -404,9 +404,11 @@ func BenchmarkLogos(b *testing.B) {
 appenders:
   console:
     - name: CONSOLE
+      no_color: true
       target: discard
       encoder:
         console:
+          disable_colors: true
 loggers:
   root:
     level: info
