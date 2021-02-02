@@ -82,7 +82,7 @@ func (e *coloredEncoder) appendColoredString(val string, color uint16) {
 		return
 	}
 
-	e.buf.AppendString(colorizeText(val, color))
+	colorizeTextW(e.buf, val, color)
 
 }
 

@@ -88,26 +88,26 @@ func (e Encoder) EncodeEntry(ent zapcore.Entry, fields []zapcore.Field) (*buffer
 
 	e.appendTimeInfo(line, ent)
 
-	line.AppendString(e.colorizeText(ent.Level.CapitalString(), lvlColor))
+	e.colorizeText(line, ent.Level.CapitalString(), lvlColor)
 
 	//pp.Println(e.DisableNaming, ent.LoggerName)
 	if !e.DisableNaming && len(ent.LoggerName) > 0 {
 
 		e.addSeparatorIfNecessary(line)
-		line.AppendString(e.colorizeText(ent.LoggerName, e.Schema.LogNaming))
+		e.colorizeText(line, ent.LoggerName, e.Schema.LogNaming)
 
 	}
 
 	if ent.Caller.Defined {
 
 		e.addSeparatorIfNecessary(line)
-		line.AppendString(e.colorizeText(ent.Caller.TrimmedPath(), e.Schema.Nil))
+		e.colorizeText(line, ent.Caller.TrimmedPath(), e.Schema.Nil)
 
 	}
 
 	if len(ent.Message) > 0 {
 		e.addSeparatorIfNecessary(line)
-		line.AppendString(e.colorizeText(ent.Message, lvlColor))
+		e.colorizeText(line, ent.Message, lvlColor)
 	}
 	//e.addSeparatorIfNecessary(line)
 	// Add any structured context.
@@ -143,7 +143,7 @@ func (e *Encoder) appendTimeInfo(buf *buffer.Buffer, entry zapcore.Entry) {
 			timeInfo = entry.Time.Format(timestampFormat)
 		}
 
-		buf.AppendString(e.colorizeText(timeInfo, e.Schema.Timestamp))
+		e.colorizeText(buf, timeInfo, e.Schema.Timestamp)
 		e.addSeparatorIfNecessary(buf)
 	}
 
@@ -184,24 +184,23 @@ func (e *Encoder) addSeparatorIfNecessary(line *buffer.Buffer) {
 	}
 }
 
-func (e *Encoder) colorizeText(text string, color uint16) string {
+func (e *Encoder) colorizeText(in *buffer.Buffer, text string, color uint16) {
 
 	if e.DisableColors {
-		return text
+		in.AppendString(text)
 	}
 
-	return colorizeText(text, color)
-
+	colorizeTextW(in, text, color)
 }
 
 func (e *Encoder) addKey(key string) {
 
-	if !e.DisableColors {
-		key = colorizeText(key, e.Schema.FieldName)
-	}
-
 	e.buf.Write([]byte(e.ConsoleSeparator))
-	e.buf.AppendString(key)
+	if !e.DisableColors {
+		colorizeTextW(e.buf, key, e.Schema.FieldName)
+	} else {
+		e.buf.AppendString(key)
+	}
 	e.buf.AppendByte('=')
 
 }

@@ -2,6 +2,7 @@ package console
 
 import (
 	"fmt"
+	"io"
 	"reflect"
 	"strings"
 )
@@ -179,4 +180,29 @@ func colorizeText(text string, color uint16) string {
 	}
 
 	return fmt.Sprintf("%s%s%s%s\033[0m", modForeground, modBackground, modBold, text)
+}
+
+func colorizeTextW(in io.Writer, text string, color uint16) {
+
+	if color&maskForeground>>bitsForeground == 0 &&
+		color&maskBackground>>bitsBackground == 0 &&
+		color&maskBold == 0 {
+		fmt.Fprint(in, text)
+	}
+
+	if foreground := color & maskForeground >> bitsForeground; foreground > 0 {
+		fmt.Fprintf(in, "\033[%dm", foreground+ansiForegroundOffset)
+	}
+	if background := color & maskBackground >> bitsBackground; background > 0 {
+		fmt.Fprintf(in, "\033[%dm", background+ansiBackgroundOffset)
+	}
+	if (color & maskBold) > 0 {
+		fmt.Fprint(in, "\033[1m")
+	}
+
+	fmt.Fprint(in, text)
+
+	// End color
+	fmt.Fprint(in, "\u001B[0m")
+
 }
