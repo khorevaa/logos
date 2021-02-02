@@ -2,7 +2,7 @@ package console
 
 import (
 	"fmt"
-	"io"
+	"go.uber.org/zap/buffer"
 	"reflect"
 	"strings"
 )
@@ -182,27 +182,32 @@ func colorizeText(text string, color uint16) string {
 	return fmt.Sprintf("%s%s%s%s\033[0m", modForeground, modBackground, modBold, text)
 }
 
-func colorizeTextW(in io.Writer, text string, color uint16) {
+func colorizeTextW(in *buffer.Buffer, text string, color uint16) {
 
 	if color&maskForeground>>bitsForeground == 0 &&
 		color&maskBackground>>bitsBackground == 0 &&
 		color&maskBold == 0 {
-		fmt.Fprint(in, text)
+		in.AppendString(text)
 	}
 
 	if foreground := color & maskForeground >> bitsForeground; foreground > 0 {
-		fmt.Fprintf(in, "\033[%dm", foreground+ansiForegroundOffset)
+		in.AppendString("\u001B[")
+		in.AppendUint(uint64(foreground + ansiForegroundOffset))
+		in.AppendString("m")
+
 	}
 	if background := color & maskBackground >> bitsBackground; background > 0 {
-		fmt.Fprintf(in, "\033[%dm", background+ansiBackgroundOffset)
+		in.AppendString("\033[")
+		in.AppendUint(uint64(background + ansiBackgroundOffset))
+		in.AppendString("m")
 	}
 	if (color & maskBold) > 0 {
-		fmt.Fprint(in, "\033[1m")
+		in.AppendString("\033[1m")
 	}
 
-	fmt.Fprint(in, text)
+	in.AppendString(text)
 
 	// End color
-	fmt.Fprint(in, "\u001B[0m")
+	in.AppendString("\u001B[0m")
 
 }
