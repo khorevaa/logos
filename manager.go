@@ -1,12 +1,12 @@
 package logos
 
 import (
-	"fmt"
 	"github.com/khorevaa/logos/appender"
 	config2 "github.com/khorevaa/logos/config"
 	"github.com/khorevaa/logos/internal/common"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"log"
 	"sync"
 )
 
@@ -53,6 +53,12 @@ func newLogManager(rawConfig *common.Config) (*logManager, error) {
 			if err != nil {
 				return nil, err
 			}
+
+			if _, ok := m.appenders[name]; ok {
+				debugf("find duplicated appender %s. Skip adding to appenders\n", name)
+				continue
+			}
+
 			m.appenders[name] = createAppender
 		}
 	}
@@ -70,11 +76,13 @@ func newLogManager(rawConfig *common.Config) (*logManager, error) {
 			return nil, err
 		}
 
+		if _, loaded := m.loggerConfigs.Load(lc.Name); loaded {
+			debugf("duplicated logger %s", lc.Name)
+			continue
+		}
+
 		m.loggerConfigs.Store(lc.Name, l)
 
-		//if _, loaded := m.loggerConfigs.LoadOrStore(lc.Name, l); loaded {
-		//	return nil, fmt.Errorf("duplicated logger %q", lc.Name)
-		//}
 	}
 
 	return &m, nil
@@ -196,7 +204,7 @@ func (m *logManager) newLoggerFromCfg(loggerCfg config2.LoggerConfig) (*loggerCo
 		if len(appenderConfig.Level) > 0 {
 			appenderLevel, err := createLevel(appenderConfig.Level)
 			if err != nil {
-				debugf("creating appender level <%s> error: %s", appenderConfig.Level, err)
+				debugf("creating appender level <%s> error: %s\n", appenderConfig.Level, err)
 				continue
 			}
 			log.coreConfigs[appenderConfig.Name] = appenderLevel
@@ -216,7 +224,7 @@ func (m *logManager) newLoggerFromCfg(loggerCfg config2.LoggerConfig) (*loggerCo
 
 func debugf(format string, args ...interface{}) {
 	if debug {
-		fmt.Printf(format, args...)
+		log.Printf(format, args...)
 	}
 }
 

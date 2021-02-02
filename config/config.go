@@ -8,7 +8,6 @@ const DefaultConfig = `
 appenders:
   console:
     - name: CONSOLE
-      target: stdout
       encoder:
         console:
 loggers:

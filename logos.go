@@ -24,11 +24,10 @@ import (
 )
 
 var (
-	manager        *logManager
-	configFile     string
-	initLocker     sync.Mutex
-	explicitInited = false
-	debug          bool
+	manager    *logManager
+	configFile string
+	initLocker sync.Mutex
+	debug      bool
 )
 
 func resolveConfigFileFromEnv() (string, error) {
@@ -59,6 +58,7 @@ func init() {
 	defer initLocker.Unlock()
 
 	debug, _ = strconv.ParseBool(os.Getenv("LOGOS_DEBUG"))
+	debugf("Logos is debugging on")
 
 	if configFile == "" {
 		cf, err := resolveConfigFileFromEnv()
@@ -85,19 +85,18 @@ func init() {
 		}
 
 		if debug {
-			fmt.Println("logos using config file: ", configFile)
+			debugf("logos using config file: <%s>", configFile)
 			bs, err := ioutil.ReadFile(configFile)
 			if err != nil {
 				panic(err)
 			}
-			fmt.Println(string(bs))
+			debugf(string(bs) + "\n")
 		}
 
 		rawConfig, _, err = common.LoadFile(configFile)
 	} else {
-		if debug {
-			fmt.Print("logos using default config:\n" + config.DefaultConfig)
-		}
+
+		debugf("logos using default config:\n" + config.DefaultConfig)
 		rawConfig, err = common.NewConfigFrom(config.DefaultConfig)
 	}
 
@@ -110,7 +109,7 @@ func init() {
 		fmt.Printf("logos loading config from env err: %s", err)
 	}
 	if envConfig != nil {
-		rawConfig, err = common.MergeConfigs(rawConfig, envConfig)
+		err = rawConfig.Merge(envConfig)
 		if err != nil {
 			fmt.Printf("logos merge configs err: %s", err)
 		}
@@ -137,10 +136,13 @@ func parseConfigFromEnv() (*common.Config, error) {
 	if configData == "" {
 		return nil, ErrEnvConfigNotSet
 	}
-	return parseConfigFromString(configData)
+	return parseConfigFromEnvString(configData)
 }
 
-func parseConfigFromString(configData string) (*common.Config, error) {
+func parseConfigFromEnvString(configData string) (*common.Config, error) {
+
+	configData = strings.TrimPrefix(configData, `"`)
+	configData = strings.TrimSuffix(configData, `"`)
 
 	newConfig := common.NewConfig()
 
@@ -148,15 +150,22 @@ func parseConfigFromString(configData string) (*common.Config, error) {
 
 	for _, strData := range data {
 
+		strData = strings.TrimSpace(strData)
 		pathValue := strings.Split(strData, "=")
 		value := ""
 		path := pathValue[0]
 		if len(pathValue) == 2 {
 			value = pathValue[1]
 		}
+
+		if len(value) == 0 && !strings.HasSuffix(path, ".") {
+			// this is object
+			path += "."
+		}
+
 		err := newConfig.SetString(path, -1, value)
-		if debug {
-			fmt.Errorf("error loading config from path %s err <%s>", path, err)
+		if err != nil {
+			debugf("error loading config from path %s err <%s>\n", path, err.Error())
 		}
 
 	}
@@ -168,13 +177,7 @@ func InitWithConfigContent(content string) error {
 	initLocker.Lock()
 	defer initLocker.Unlock()
 
-	//if explicitInited {
-	//	return errors.New("logos is explicit inited")
-	//}
-
-	if debug {
-		fmt.Println("logos InitWithConfigContent:\n" + content)
-	}
+	debugf("logos InitWithConfigContent:\n" + content)
 
 	rawConfig, err := common.NewConfigFrom(content)
 	if err != nil {
@@ -185,8 +188,6 @@ func InitWithConfigContent(content string) error {
 	if err != nil {
 		return err
 	}
-
-	//explicitInited = true
 
 	return nil
 }

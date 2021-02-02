@@ -66,7 +66,7 @@ func NewWriter(name string, config *common.Config) (zapcore.WriteSyncer, error) 
 }
 
 type EncoderConfig struct {
-	Namespace common.ConfigNamespace `logos-config:",inline"`
+	Namespace common.ConfigNamespace `logos-config:",inline,replace"`
 }
 
 func RegisterEncoderType(name string, gen EncoderFactory) {

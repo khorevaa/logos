@@ -49,6 +49,89 @@ func main() {
 }
 
 ```
+### Setup config
+
+Logos loads configuration file from system environment variable `LOGOS_CONFIG_FILE`.
+If the variable is unset, then Logos will try to load the configuration file from current work directory, the file name is "logos.yaml" or "logos.yml".
+
+Additionally, the configuration is loaded from the environment variable `LOGOS_CONFIG` adn connects to the configuration obtained from the file and takes precedence over its data.
+
+#### From file
+
+```yaml
+appenders:
+  console:
+    - name: CONSOLE
+      target: stdout
+      encoder:
+        console:
+          
+  file:
+    - name: FILE
+      file_name: /tmp/app.log
+      encoder:
+        json:
+  gelf_udp:
+    - name: GRAYLOG
+      host: 127.0.0.1
+      port: 12201
+      compression_type: none
+      encoder:
+        gelf:
+          key_value_pairs:
+            - key: env
+              value: ${ENV:dev}
+            - key: app
+              value: ${APPNAME:demo}
+            - key: file
+              value: app.log
+  rolling_file:
+    - name: GELF_FILE
+      file_name: /tmp/app_gelf.log
+      max_size: 100
+      encoder:
+        gelf:
+          key_value_pairs:
+            - key: env
+              value: ${ENV:dev}
+            - key: app
+              value: ${APPNAME:demo}
+            - key: file
+              value: app.log
+loggers:
+  root:
+    level: info
+    appender_refs:
+      - CONSOLE
+  logger:
+    - name: helloworld
+      appender_refs:
+        - CONSOLE
+        - FILE
+        - GELF_FILE
+        - GRAYLOG
+      level: debug      
+```
+
+#### From ENV
+
+```bash
+
+# Setup all logs level DEBUG
+export LOGOS_CONFIG=loggers.root.level=debug
+
+# Add new appender and setup it to logger
+export LOGOS_CONFIG="appenders.console.0.name=CONSOLE_TEST;
+appenders.console.0.target=stdout;
+appenders.console.0.no_color=true;
+appenders.console.0.encoder.console;
+loggers.logger.0.add_caller=true;
+loggers.logger.0.level=debug;
+loggers.logger.0.name=github.com/khorevaa/logos;
+loggers.logger.0.appender_refs.0=CONSOLE_TEST"
+
+
+```
 
 ### Json Writer
 

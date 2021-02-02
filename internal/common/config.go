@@ -15,7 +15,7 @@ type Config ucfg.Config
 
 // ConfigNamespace storing at most one configuration section by name and sub-section.
 type ConfigNamespace struct {
-	name   string
+	name   string `logos-config:"name,required"`
 	config *Config
 }
 
@@ -25,7 +25,8 @@ var configOpts = []ucfg.Option{
 	ucfg.VarExp,
 	ucfg.StructTag("logos-config"),
 	ucfg.ValidatorTag("logos-validate"),
-	ucfg.ReplaceValues,
+	ucfg.PrependValues,
+	//ucfg.,
 }
 
 func NewConfig() *Config {

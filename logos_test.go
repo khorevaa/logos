@@ -1,11 +1,11 @@
 package logos
 
 import (
+	"github.com/khorevaa/logos/appender"
 	"github.com/khorevaa/logos/config"
 	"github.com/khorevaa/logos/internal/common"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-	"reflect"
 	"strings"
 	"testing"
 )
@@ -73,7 +73,7 @@ func Test_parseConfigFromString(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    []string
-		want    config.Config
+		want    string
 		wantErr bool
 	}{
 		{
@@ -89,13 +89,10 @@ func Test_parseConfigFromString(t *testing.T) {
 				//"loggers.root.appender_refs.0=CONSOLE",
 				"loggers.root.level=debug",
 			},
-			config.Config{
-				Loggers: config.Loggers{
-					Root: config.RootLogger{
-						Level: "debug",
-					},
-				},
-			},
+			`
+loggers:
+  root:
+    level: debug`,
 			false,
 		},
 		{
@@ -110,17 +107,15 @@ func Test_parseConfigFromString(t *testing.T) {
 				"loggers.logger.0.name=github.com/khorevaa/logos",
 				"loggers.logger.0.appender_refs.0=CONSOLE",
 			},
-			config.Config{
-				Loggers: config.Loggers{
-					Logger: []config.LoggerConfig{{
-						Level:        "debug",
-						AddCaller:    true,
-						Name:         "github.com/khorevaa/logos",
-						AppenderRefs: []string{"CONSOLE"},
-					},
-					},
-				},
-			},
+			`
+loggers:
+  logger:
+    - name: github.com/khorevaa/logos
+      level: debug
+      add_caller: true
+      appender_refs:
+        - CONSOLE
+`,
 			false,
 		},
 		{
@@ -135,44 +130,74 @@ func Test_parseConfigFromString(t *testing.T) {
 				"loggers.logger.0.name=github.com/khorevaa/logos",
 				"loggers.logger.0.appender_refs.0=CONSOLE_TEST",
 			},
-			config.Config{
-				Appenders: map[string][]*common.Config{
-					"console": {
-						&common.Config{},
-					},
-				},
-				Loggers: config.Loggers{
-					Logger: []config.LoggerConfig{{
-						Level:        "debug",
-						AddCaller:    true,
-						Name:         "github.com/khorevaa/logos",
-						AppenderRefs: []string{"CONSOLE"},
-					},
-					},
-				},
-			},
+			`
+appenders:
+  console:
+    - name: CONSOLE_TEST
+      target: stdout
+      no_color: true
+      encoder:
+        console:
+
+loggers:
+  logger:
+    - name: github.com/khorevaa/logos
+      level: debug
+      add_caller: true
+      appender_refs:
+        - CONSOLE_TEST
+`,
 			false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseConfigFromString(strings.Join(tt.args, ";"))
+			got, err := parseConfigFromEnvString(strings.Join(tt.args, ";"))
 
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseConfigFromString() error = %v, wantErr %v", err, tt.wantErr)
+			if err != nil {
+				t.Errorf("parseConfigFromEnvString() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			var cfg config.Config
 			err = got.Unpack(&cfg)
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("parseConfigFromString() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("parseConfigFromEnvString() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
-			if !reflect.DeepEqual(cfg, tt.want) {
-				t.Errorf("parseConfigFromString() got = %v, want %v", cfg, tt.want)
+			want, err := common.NewConfigFrom(tt.want)
+			var wantCfg config.Config
+			if err != nil {
+				t.Errorf("parseConfigFromEnvString() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
+			err = want.Unpack(&wantCfg)
+
+			if err != nil {
+				t.Errorf("parseConfigFromEnvString() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if len(cfg.Appenders) > 0 {
+
+				for appenderType, appenderConfigs := range cfg.Appenders {
+
+					for idx, appenderConfig := range appenderConfigs {
+						cfgAppender, err := appender.CreateAppender(appenderType, appenderConfig)
+						assert.NoError(t, err)
+						wantAppender, err := appender.CreateAppender(appenderType, wantCfg.Appenders[appenderType][idx])
+						assert.NoError(t, err)
+						assert.EqualValuesf(t, cfgAppender, wantAppender, "parseConfigFromEnvString() got = %v, want %v", cfgAppender, wantAppender)
+
+					}
+
+				}
+
+			} else {
+				assert.EqualValuesf(t, cfg.Loggers, wantCfg.Loggers, "parseConfigFromEnvString() got = %v, want %v", cfg, wantCfg)
+			}
+
 		})
 	}
 }
