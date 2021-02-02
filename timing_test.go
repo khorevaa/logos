@@ -22,7 +22,7 @@ func TestJob_Event(t *testing.T) {
 		KeyValues map[string]string
 	}
 
-	emit := New("job_emmiter").EventEmitter()
+	emit := New("job_emitter").EventEmitter()
 
 	tests := []struct {
 		name   string
