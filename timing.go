@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+type Kvs map[string]string
+
 type Emitter interface {
 	EmitEvent(job string, event string, kvs map[string]string)
 	EmitEventErr(job string, event string, err error, kvs map[string]string)
@@ -78,7 +80,16 @@ func (e *warpLogger) EmitComplete(job string, status CompletionStatus, nanosecon
 
 	kvsToFields(&fields, kvs)
 
-	e.emit(0, e.emitLevel, fields)
+	lvl := e.emitLevel
+
+	switch status {
+	case Err, ValidationError, Panic:
+		lvl = ErrorLevel
+	case Junk:
+		lvl = WarnLevel
+	}
+
+	e.emit(0, lvl, fields)
 
 }
 
@@ -209,6 +220,14 @@ func (j *Job) Complete(status CompletionStatus) {
 func (j *Job) CompleteKv(status CompletionStatus, kvs map[string]string) {
 	allKvs := j.mergedKeyValues(kvs)
 	j.emitter.EmitComplete(j.Name, status, time.Since(j.Start).Nanoseconds(), allKvs)
+}
+
+func (j *Job) KeyValue(key string, value string) *Job {
+	if j.KeyValues == nil {
+		j.KeyValues = make(map[string]string)
+	}
+	j.KeyValues[key] = value
+	return j
 }
 
 func (j *Job) mergedKeyValues(instanceKvs map[string]string) map[string]string {

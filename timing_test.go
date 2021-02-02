@@ -103,6 +103,45 @@ func TestJob_Event(t *testing.T) {
 			},
 		},
 		{
+			"emit event complete panic",
+			fields{
+				Name:    "users_job",
+				emitter: emit,
+				Start:   time.Now(),
+			},
+			args{
+				eventType: "Complete",
+				status:    Panic,
+				event:     "get_users",
+			},
+		},
+		{
+			"emit event complete validate error",
+			fields{
+				Name:    "users_job",
+				emitter: emit,
+				Start:   time.Now(),
+			},
+			args{
+				eventType: "Complete",
+				status:    ValidationError,
+				event:     "get_users",
+			},
+		},
+		{
+			"emit event complete Junk",
+			fields{
+				Name:    "users_job",
+				emitter: emit,
+				Start:   time.Now(),
+			},
+			args{
+				eventType: "Complete",
+				status:    Junk,
+				event:     "get_users",
+			},
+		},
+		{
 			"emit event complete with kv",
 			fields{
 				Name:    "users_job",
