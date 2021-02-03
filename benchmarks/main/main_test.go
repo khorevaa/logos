@@ -36,7 +36,7 @@ loggers:
 
 	logger := logos.New("benchmark")
 	for i := 0; i < b.N; i++ {
-		logger.Info(fakeMessage, zap.String("foo", "bar"), zap.Int("int", 42))
+		logger.Info(fakeMessage, logos.String("str", "... str  \\"))
 	}
 }
 
@@ -77,7 +77,7 @@ appenders:
         json:
 loggers:
   root:
-    level: info
+    level: error
     appender_refs:
       - CONSOLE
 `

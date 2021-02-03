@@ -143,8 +143,22 @@ func (e *coloredEncoder) AppendInt8(val int8) {
 
 func (e *coloredEncoder) AppendString(str string) {
 	e.addElementSeparator()
-	//str = strconv.Quote(str)
+
+	if needsQuote(str) {
+		e.appendColoredString(strconv.Quote(str), e.scheme.String)
+		return
+	}
 	e.appendColoredString(str, e.scheme.String)
+
+}
+
+func needsQuote(s string) bool {
+	for i := range s {
+		if s[i] < 0x20 || s[i] > 0x7e || s[i] == ' ' || s[i] == '\\' || s[i] == '"' {
+			return true
+		}
+	}
+	return false
 }
 
 func (e *coloredEncoder) AppendUint(val uint) {
@@ -181,22 +195,6 @@ func (e *coloredEncoder) AddObject(key string, obj zapcore.ObjectMarshaler) erro
 	e.addKey(key)
 	return e.AppendObject(obj)
 }
-
-//func (enc *coloredEncoder) AppendArray(arr ArrayMarshaler) error {
-//	enc.addElementSeparator()
-//	enc.buf.AppendByte('[')
-//	err := arr.MarshalLogArray(enc)
-//	enc.buf.AppendByte(']')
-//	return err
-//}
-//
-//func (enc *jsonEncoder) AppendObject(obj ObjectMarshaler) error {
-//	enc.addElementSeparator()
-//	enc.buf.AppendByte('{')
-//	err := obj.MarshalLogObject(enc)
-//	enc.buf.AppendByte('}')
-//	return err
-//}
 
 func (e *coloredEncoder) AddBinary(key string, val []byte) {
 	e.AddString(key, base64.StdEncoding.EncodeToString(val))
@@ -307,16 +305,21 @@ func (e *coloredEncoder) OpenNamespace(_ string) {
 }
 
 func (e *coloredEncoder) AppendDuration(val time.Duration) {
-	cur := e.buf.Len()
-	e.EncodeDuration(val, e)
-	if cur == e.buf.Len() {
-		e.AppendInt64(int64(val))
-	}
+	//cur := e.buf.Len()
+	//e.EncodeDuration(val, e)
+	//if cur == e.buf.Len() {
+	//	e.AppendInt64(int64(val))
+	//}
+
+	e.appendColoredString(val.String(), e.scheme.Time)
+
 }
 
 func (e *coloredEncoder) AppendTime(val time.Time) {
 	cur := e.buf.Len()
-	e.EncodeTime(val, e)
+	if e.EncodeTime != nil {
+		e.EncodeTime(val, e)
+	}
 	if cur == e.buf.Len() {
 		e.AppendInt64(val.UnixNano())
 	}

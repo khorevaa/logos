@@ -132,18 +132,21 @@ func (e Encoder) EncodeEntry(ent zapcore.Entry, fields []zapcore.Field) (*buffer
 // appends formatted TimestampFormat else
 func (e *Encoder) appendTimeInfo(buf *buffer.Buffer, entry zapcore.Entry) {
 	if !e.DisableTimestamp {
-		var timeInfo string
+
 		if e.UseTimePassedAsTimestamp {
-			timeInfo = fmt.Sprintf("[%04d]", int(entry.Time.Sub(baseTimestamp)/time.Second))
+
+			e.colorizeText(buf, fmt.Sprintf("[%04d]", int(entry.Time.Sub(baseTimestamp)/time.Second)), e.Schema.Timestamp)
+
 		} else {
-			timestampFormat := e.TimestampFormat
-			if timestampFormat == "" {
-				timestampFormat = defaultTimestampFormat
+
+			if e.TimestampFormat == "" {
+				e.colorizeText(buf, entry.Time.Format(defaultTimestampFormat), e.Schema.Timestamp)
+			} else {
+				e.colorizeText(buf, entry.Time.Format(e.TimestampFormat), e.Schema.Timestamp)
 			}
-			timeInfo = entry.Time.Format(timestampFormat)
+
 		}
 
-		e.colorizeText(buf, timeInfo, e.Schema.Timestamp)
 		e.addSeparatorIfNecessary(buf)
 	}
 
@@ -176,6 +179,7 @@ func (e *Encoder) colorizeText(in *buffer.Buffer, text string, color uint16) {
 
 	if e.DisableColors {
 		in.AppendString(text)
+		return
 	}
 
 	colorizeTextW(in, text, color)
@@ -184,10 +188,10 @@ func (e *Encoder) colorizeText(in *buffer.Buffer, text string, color uint16) {
 func (e *Encoder) addKey(key string) {
 
 	e.buf.Write([]byte(e.ConsoleSeparator))
-	if !e.DisableColors {
-		colorizeTextW(e.buf, key, e.Schema.FieldName)
-	} else {
+	if e.DisableColors {
 		e.buf.AppendString(key)
+	} else {
+		colorizeTextW(e.buf, key, e.Schema.FieldName)
 	}
 	e.buf.AppendByte('=')
 
@@ -199,9 +203,7 @@ func (e *Encoder) encodeTime(val time.Time) string {
 	if timestampFormat == "" {
 		timestampFormat = defaultTimestampFormat
 	}
-	timeInfo := val.Format(timestampFormat)
-
-	return timeInfo
+	return val.Format(timestampFormat)
 
 }
 

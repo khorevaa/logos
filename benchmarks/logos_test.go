@@ -54,14 +54,21 @@ func init() {
 appenders:
   console:
     - name: CONSOLE
+      no_color: true
       target: discard
       encoder:
         console:
+           disable_colors: true
+           disable_timestamp: true
 loggers:
   root:
-    level: info
+    level: error
     appender_refs:
       - CONSOLE
+  loggers:
+    logger:
+      name: test
+      level: error
 `
 	err := logos.InitWithConfigContent(newConfig)
 	if err != nil {
@@ -106,13 +113,13 @@ func (u *user) MarshalLogObject(enc zapcore.ObjectEncoder) error {
 
 func newZapLogger(lvl zapcore.Level) logos.Logger {
 	log := logos.New("test")
-	log.SetLLevel(lvl)
+	//log.SetLLevel(lvl)
 	return log
 
 }
 
-func fakeFields() []interface{} {
-	return []interface{}{
+func fakeFields() []logos.Field {
+	return []logos.Field{
 		zap.Int("int", _tenInts[0]),
 		zap.Ints("ints", _tenInts),
 		zap.String("string", _tenStrings[0]),
