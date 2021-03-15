@@ -24,9 +24,27 @@ func (l *loggerConfig) CreateLogger(appenders map[string]*appender.Appender) *wa
 		return newLogger(l.Name, newZapLogger(l.Name, zapcore.NewNopCore()))
 	}
 
-	zc := newZapCore(l.coreConfigs, appenders)
+	zc := newZapCore(l.getCoreConfigs(), appenders)
 	zl := newZapLogger(l.Name, zc, zap.WithCaller(l.AddCaller), zap.AddStacktrace(l.AddStacktrace), zap.AddCallerSkip(1))
 	return newLogger(l.Name, zl)
+
+}
+
+func (l *loggerConfig) getCoreConfigs() map[string]zapcore.Level {
+
+	config := make(map[string]zapcore.Level)
+
+	for s, level := range l.coreConfigs {
+
+		config[s] = level
+
+		if !level.Enabled(l.Level) {
+			config[s] = l.Level
+		}
+
+	}
+
+	return config
 
 }
 
@@ -35,7 +53,7 @@ func (l *loggerConfig) UpdateLogger(logger *warpLogger, appenders map[string]*ap
 	if l.Level == OffLevel {
 		logger.updateLogger(zap.NewNop())
 	}
-	zc := newZapCore(l.coreConfigs, appenders)
+	zc := newZapCore(l.getCoreConfigs(), appenders)
 
 	newLogger := zap.New(zc, zap.WithCaller(l.AddCaller), zap.AddStacktrace(l.AddStacktrace), zap.AddCallerSkip(1))
 
