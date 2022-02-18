@@ -3,10 +3,6 @@ package logos
 import (
 	"errors"
 	"fmt"
-	"github.com/khorevaa/logos/config"
-	"github.com/khorevaa/logos/internal/common"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -15,6 +11,10 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+
+	"github.com/khorevaa/logos/config"
+	"github.com/khorevaa/logos/internal/common"
+	"go.uber.org/zap/zapcore"
 
 	_ "github.com/khorevaa/logos/appender"
 	_ "github.com/khorevaa/logos/encoder/common"
@@ -196,12 +196,8 @@ func New(name string) Logger {
 	manager.Sync()
 	return manager.NewLogger(name)
 }
-func SetLevel(name string, level zapcore.Level) {
-	manager.SetLevel(name, level)
-}
-
-func UpdateLogger(name string, logger *zap.Logger) {
-	manager.UpdateLogger(name, logger)
+func SetLevel(name string, level zapcore.Level, appender ...string) {
+	manager.SetLevel(name, level, appender...)
 }
 
 func Sync() {

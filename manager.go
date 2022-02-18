@@ -1,13 +1,14 @@
 package logos
 
 import (
+	log2 "log"
+	"sync"
+
 	"github.com/khorevaa/logos/appender"
 	config2 "github.com/khorevaa/logos/config"
 	"github.com/khorevaa/logos/internal/common"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"log"
-	"sync"
 )
 
 const (
@@ -22,7 +23,7 @@ type logManager struct {
 
 	appenders map[string]*appender.Appender
 
-	rootLevel        zapcore.Level
+	rootLevel        zap.AtomicLevel
 	rootLogger       *warpLogger
 	rootLoggerConfig *loggerConfig
 
@@ -93,10 +94,15 @@ func (m *logManager) NewLogger(name string) Logger {
 	return m.getLogger(name)
 }
 
-func (m *logManager) SetLevel(name string, level zapcore.Level) {
+func (m *logManager) SetLevel(name string, level zapcore.Level, appender ...string) {
 
-	// TODO Чтото сделать
-	//return m.getLogger(name)
+	logConfig := m.newCoreLoggerConfig(name)
+	for _, appenderName := range appender {
+		logConfig.updateConfigLevel(appenderName, level)
+	}
+
+	m.loggerConfigs.Store(name, logConfig)
+
 }
 
 func (m *logManager) getLogger(name string, lock ...bool) *warpLogger {
@@ -165,10 +171,10 @@ func (m *logManager) getRootLoggerConfig() *loggerConfig {
 	log := &loggerConfig{
 		Name:          name,
 		Level:         m.rootLevel,
-		coreConfigs:   make(map[string]zapcore.Level),
+		coreConfigs:   make(map[string]zap.AtomicLevel),
 		AddStacktrace: StackTraceLevelEnabler,
 	}
-	log.coreConfigs["CONSOLE"] = InfoLevel
+	log.coreConfigs["CONSOLE"] = zap.NewAtomicLevelAt(InfoLevel)
 
 	m.rootLoggerConfig = log
 	m.loggerConfigs.Store(name, log)
@@ -193,7 +199,7 @@ func (m *logManager) newLoggerFromCfg(loggerCfg config2.LoggerConfig) (*loggerCo
 	log.Level = level
 
 	if len(appenders) > 0 {
-		log.coreConfigs = make(map[string]zapcore.Level, len(appenders))
+		log.coreConfigs = make(map[string]zap.AtomicLevel, len(appenders))
 		for _, appenderName := range appenders {
 			log.coreConfigs[appenderName] = level
 		}
@@ -216,7 +222,7 @@ func (m *logManager) newLoggerFromCfg(loggerCfg config2.LoggerConfig) (*loggerCo
 	log.AddStacktrace = StackTraceLevelEnabler
 
 	if tLevel, err := createLevel(loggerCfg.TraceLevel); len(loggerCfg.TraceLevel) > 0 && err == nil {
-		log.AddStacktrace = zap.NewAtomicLevelAt(tLevel)
+		log.AddStacktrace = tLevel
 	}
 
 	return log, nil
@@ -224,31 +230,31 @@ func (m *logManager) newLoggerFromCfg(loggerCfg config2.LoggerConfig) (*loggerCo
 
 func debugf(format string, args ...interface{}) {
 	if debug {
-		log.Printf(format, args...)
+		log2.Printf(format, args...)
 	}
 }
 
 func (m *logManager) loadCoreLoggerConfig(name string, parent *loggerConfig) *loggerConfig {
 
-	if log, ok := m.loggerConfigs.Load(name); ok {
-		return log.(*loggerConfig)
+	if logConfig, ok := m.loggerConfigs.Load(name); ok {
+		return logConfig.(*loggerConfig)
 	}
 
 	if parent == nil {
 		parent = m.rootLoggerConfig
 	}
 
-	log := &loggerConfig{
+	logConfig := &loggerConfig{
 		Name:          name,
 		Parent:        parent,
 		AddStacktrace: parent.AddStacktrace,
 		AddCaller:     parent.AddCaller,
-		coreConfigs:   make(map[string]zapcore.Level),
+		coreConfigs:   make(map[string]zap.AtomicLevel),
 	}
 
-	copyMapConfig(log.coreConfigs, parent.coreConfigs)
-	m.loggerConfigs.Store(name, log)
-	return log
+	copyMapConfig(logConfig.coreConfigs, parent.coreConfigs)
+	m.loggerConfigs.Store(name, logConfig)
+	return logConfig
 
 }
 
@@ -354,7 +360,7 @@ func (m *logManager) newRootLoggerFromCfg(root config2.RootLogger) error {
 	rootLoggerConfig := &loggerConfig{
 		Name:          rootLoggerName,
 		Level:         m.rootLevel,
-		coreConfigs:   make(map[string]zapcore.Level),
+		coreConfigs:   make(map[string]zap.AtomicLevel),
 		AddStacktrace: StackTraceLevelEnabler,
 	}
 
@@ -391,12 +397,12 @@ func (m *logManager) UpdateLogger(name string, logger *zap.Logger) {
 	core.updateLogger(logger)
 }
 
-func createLevel(level string) (zapcore.Level, error) {
+func createLevel(level string) (zap.AtomicLevel, error) {
 	switch level {
 	case "off", "OFF", "false":
-		return OffLevel, nil
+		return zap.NewAtomicLevelAt(OffLevel), nil
 	default:
-		var l zapcore.Level
+		var l zap.AtomicLevel
 		err := l.UnmarshalText([]byte(level))
 		return l, err
 	}

@@ -2,11 +2,12 @@ package console
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/khorevaa/logos/appender"
 	"github.com/khorevaa/logos/internal/common"
 	"go.uber.org/zap/buffer"
 	"go.uber.org/zap/zapcore"
-	"time"
 )
 
 var defaultTimestampFormat = "2006-01-02T15:04:05.000Z0700"
@@ -80,7 +81,7 @@ func (e *Encoder) clone() *Encoder {
 }
 
 // EncodeEntry implements the EncodeEntry method of the zapcore Encoder interface
-func (e Encoder) EncodeEntry(ent zapcore.Entry, fields []zapcore.Field) (*buffer.Buffer, error) {
+func (e *Encoder) EncodeEntry(ent zapcore.Entry, fields []zapcore.Field) (*buffer.Buffer, error) {
 
 	line := bufferpool.Get()
 
@@ -90,7 +91,7 @@ func (e Encoder) EncodeEntry(ent zapcore.Entry, fields []zapcore.Field) (*buffer
 
 	e.colorizeText(line, ent.Level.CapitalString(), lvlColor)
 
-	//pp.Println(e.DisableNaming, ent.LoggerName)
+	// pp.Println(e.DisableNaming, ent.LoggerName)
 	if !e.DisableNaming && len(ent.LoggerName) > 0 {
 
 		e.addSeparatorIfNecessary(line)
@@ -109,7 +110,11 @@ func (e Encoder) EncodeEntry(ent zapcore.Entry, fields []zapcore.Field) (*buffer
 		e.addSeparatorIfNecessary(line)
 		e.colorizeText(line, ent.Message, lvlColor)
 	}
-	//e.addSeparatorIfNecessary(line)
+
+	if e.buf.Len() > 0 {
+		line.Write(e.buf.Bytes())
+	}
+
 	// Add any structured context.
 	e.writeContext(lvlColor, line, fields)
 
