@@ -10,50 +10,32 @@ type loggerConfig struct {
 	Name string
 
 	// Global core config
-	Level         zapcore.Level
+	Level         zap.AtomicLevel
 	AddCaller     bool
 	AddStacktrace zapcore.LevelEnabler
 
 	Parent      *loggerConfig
-	coreConfigs map[string]zapcore.Level
+	coreConfigs map[string]zap.AtomicLevel
+}
+
+func (l *loggerConfig) updateConfigLevel(appenderName string, level zapcore.Level) {
+
+	if atomicLevel, ok := l.coreConfigs[appenderName]; ok {
+		atomicLevel.SetLevel(level)
+	}
 }
 
 func (l *loggerConfig) CreateLogger(appenders map[string]*appender.Appender) *warpLogger {
 
-	if l.Level == OffLevel {
-		return newLogger(l.Name, newZapLogger(l.Name, zapcore.NewNopCore()))
-	}
-
-	zc := newZapCore(l.getCoreConfigs(), appenders)
+	zc := newZapCore(l.coreConfigs, appenders)
 	zl := newZapLogger(l.Name, zc, zap.WithCaller(l.AddCaller), zap.AddStacktrace(l.AddStacktrace), zap.AddCallerSkip(1))
 	return newLogger(l.Name, zl)
 
 }
 
-func (l *loggerConfig) getCoreConfigs() map[string]zapcore.Level {
-
-	config := make(map[string]zapcore.Level)
-
-	for s, level := range l.coreConfigs {
-
-		config[s] = level
-
-		if !level.Enabled(l.Level) {
-			config[s] = l.Level
-		}
-
-	}
-
-	return config
-
-}
-
 func (l *loggerConfig) UpdateLogger(logger *warpLogger, appenders map[string]*appender.Appender) {
 
-	if l.Level == OffLevel {
-		logger.updateLogger(zap.NewNop())
-	}
-	zc := newZapCore(l.getCoreConfigs(), appenders)
+	zc := newZapCore(l.coreConfigs, appenders)
 
 	newLogger := zap.New(zc, zap.WithCaller(l.AddCaller), zap.AddStacktrace(l.AddStacktrace), zap.AddCallerSkip(1))
 
@@ -71,7 +53,7 @@ func (l *loggerConfig) copy(name string) *loggerConfig {
 		Name:        name,
 		Level:       l.Level,
 		Parent:      l.Parent,
-		coreConfigs: make(map[string]zapcore.Level),
+		coreConfigs: make(map[string]zap.AtomicLevel),
 	}
 
 	copyMapConfig(log.coreConfigs, l.coreConfigs)
@@ -80,18 +62,19 @@ func (l *loggerConfig) copy(name string) *loggerConfig {
 
 }
 
-func copyMapConfig(dst map[string]zapcore.Level, src map[string]zapcore.Level) {
+func copyMapConfig(dst map[string]zap.AtomicLevel, src map[string]zap.AtomicLevel) {
 
 	if len(src) == 0 {
 		return
 	}
 
 	if dst == nil {
-		dst = make(map[string]zapcore.Level, len(src))
+		dst = make(map[string]zap.AtomicLevel, len(src))
 	}
 
 	for name, level := range src {
-		dst[name] = level
+
+		dst[name] = zap.NewAtomicLevelAt(level.Level())
 	}
 
 }

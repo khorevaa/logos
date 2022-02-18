@@ -1,11 +1,13 @@
 package logos
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var _ Logger = (*warpLogger)(nil)
@@ -38,180 +40,206 @@ type warpLogger struct {
 	_lockWait sync.WaitGroup
 }
 
-func (l *warpLogger) Sugar() SugaredLogger {
+func (log *warpLogger) copy() *warpLogger {
 
-	l.initSugaredLogger()
-	return l
+	return &warpLogger{
+		Name:      log.Name,
+		defLogger: log.defLogger.WithOptions(),
+		mu:        sync.RWMutex{},
+		emitLevel: log.emitLevel,
+	}
 }
 
-func (l *warpLogger) Debug(msg string, fields ...Field) {
-	l.checkLock()
-	l.defLogger.Debug(msg, fields...)
+func (log *warpLogger) Sugar() SugaredLogger {
+
+	log.initSugaredLogger()
+	return log
 }
 
-func (l *warpLogger) Info(msg string, fields ...Field) {
+func (log *warpLogger) Named(s string) Logger {
 
-	l.checkLock()
-	l.defLogger.Info(msg, fields...)
+	copyLog := log.copy()
+
+	if copyLog.Name == "" {
+		copyLog.Name = s
+	} else {
+		copyLog.Name = strings.Join([]string{copyLog.Name, s}, ".")
+	}
+
+	copyLog.defLogger = copyLog.defLogger.Named(s)
+	return copyLog
 }
 
-func (l *warpLogger) Warn(msg string, fields ...Field) {
-	l.checkLock()
-	l.defLogger.Warn(msg, fields...)
+func (log *warpLogger) With(fields ...Field) Logger {
+	log.checkLock()
+	logger := log.copy()
+	logger.defLogger = logger.defLogger.WithOptions(zap.Fields(fields...))
+	return logger
 }
 
-func (l *warpLogger) Error(msg string, fields ...Field) {
-	l.checkLock()
-	l.defLogger.Error(msg, fields...)
+func (log *warpLogger) Debug(msg string, fields ...Field) {
+	log.checkLock()
+	log.defLogger.Debug(msg, fields...)
 }
 
-func (l *warpLogger) Fatal(msg string, fields ...Field) {
-	l.checkLock()
-	l.defLogger.Fatal(msg, fields...)
+func (log *warpLogger) Info(msg string, fields ...Field) {
+
+	log.checkLock()
+	log.defLogger.Info(msg, fields...)
 }
 
-func (l *warpLogger) Panic(msg string, fields ...Field) {
-	l.checkLock()
-	l.defLogger.Panic(msg, fields...)
+func (log *warpLogger) Warn(msg string, fields ...Field) {
+	log.checkLock()
+	log.defLogger.Warn(msg, fields...)
 }
 
-func (l *warpLogger) DPanic(msg string, fields ...Field) {
-	l.checkLock()
-	l.defLogger.DPanic(msg, fields...)
+func (log *warpLogger) Error(msg string, fields ...Field) {
+	log.checkLock()
+	log.defLogger.Error(msg, fields...)
 }
 
-func (l *warpLogger) Debugf(format string, args ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.Debugf(format, args...)
+func (log *warpLogger) Fatal(msg string, fields ...Field) {
+	log.checkLock()
+	log.defLogger.Fatal(msg, fields...)
 }
 
-func (l *warpLogger) Infof(format string, args ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.Infof(format, args...)
+func (log *warpLogger) Panic(msg string, fields ...Field) {
+	log.checkLock()
+	log.defLogger.Panic(msg, fields...)
 }
 
-func (l *warpLogger) Warnf(format string, args ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.Warnf(format, args...)
+func (log *warpLogger) DPanic(msg string, fields ...Field) {
+	log.checkLock()
+	log.defLogger.DPanic(msg, fields...)
 }
 
-func (l *warpLogger) Errorf(format string, args ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.Errorf(format, args...)
+func (log *warpLogger) Debugf(format string, args ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.Debugf(format, args...)
 }
 
-func (l *warpLogger) Fatalf(format string, args ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.Fatalf(format, args...)
+func (log *warpLogger) Infof(format string, args ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.Infof(format, args...)
 }
 
-func (l *warpLogger) Panicf(format string, args ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.Panicf(format, args...)
+func (log *warpLogger) Warnf(format string, args ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.Warnf(format, args...)
 }
 
-func (l *warpLogger) DPanicf(format string, args ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.DPanicf(format, args...)
+func (log *warpLogger) Errorf(format string, args ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.Errorf(format, args...)
 }
 
-func (l *warpLogger) Debugw(msg string, keysAndValues ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.Debugw(msg, keysAndValues...)
+func (log *warpLogger) Fatalf(format string, args ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.Fatalf(format, args...)
 }
 
-func (l *warpLogger) Infow(msg string, keysAndValues ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.Infow(msg, keysAndValues...)
+func (log *warpLogger) Panicf(format string, args ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.Panicf(format, args...)
 }
 
-func (l *warpLogger) Warnw(msg string, keysAndValues ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.Warnw(msg, keysAndValues...)
+func (log *warpLogger) DPanicf(format string, args ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.DPanicf(format, args...)
 }
 
-func (l *warpLogger) Errorw(msg string, keysAndValues ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.Errorw(msg, keysAndValues...)
+func (log *warpLogger) Debugw(msg string, keysAndValues ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.Debugw(msg, keysAndValues...)
 }
 
-func (l *warpLogger) Fatalw(msg string, keysAndValues ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.Fatalw(msg, keysAndValues...)
+func (log *warpLogger) Infow(msg string, keysAndValues ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.Infow(msg, keysAndValues...)
 }
 
-func (l *warpLogger) Panicw(msg string, keysAndValues ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.Panicw(msg, keysAndValues...)
+func (log *warpLogger) Warnw(msg string, keysAndValues ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.Warnw(msg, keysAndValues...)
 }
 
-func (l *warpLogger) DPanicw(msg string, keysAndValues ...interface{}) {
-	l.checkLock()
-	l.sugaredLogger.DPanicw(msg, keysAndValues...)
+func (log *warpLogger) Errorw(msg string, keysAndValues ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.Errorw(msg, keysAndValues...)
 }
 
-func (l *warpLogger) Sync() error {
-	return l.defLogger.Sync()
+func (log *warpLogger) Fatalw(msg string, keysAndValues ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.Fatalw(msg, keysAndValues...)
 }
 
-func (l *warpLogger) Desugar() Logger {
-	return l
+func (log *warpLogger) Panicw(msg string, keysAndValues ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.Panicw(msg, keysAndValues...)
 }
 
-func (l *warpLogger) UsedAt() time.Time {
-	unix := atomic.LoadUint32(&l._usedAt)
+func (log *warpLogger) DPanicw(msg string, keysAndValues ...interface{}) {
+	log.checkLock()
+	log.sugaredLogger.DPanicw(msg, keysAndValues...)
+}
+
+func (log *warpLogger) Sync() error {
+	return log.defLogger.Sync()
+}
+
+func (log *warpLogger) Desugar() Logger {
+	return log
+}
+
+func (log *warpLogger) UsedAt() time.Time {
+	unix := atomic.LoadUint32(&log._usedAt)
 	return time.Unix(int64(unix), 0)
 }
 
-func (l *warpLogger) SetUsedAt(tm time.Time) {
-	atomic.StoreUint32(&l._usedAt, uint32(tm.Unix()))
+func (log *warpLogger) SetUsedAt(tm time.Time) {
+	atomic.StoreUint32(&log._usedAt, uint32(tm.Unix()))
 }
 
-func (l *warpLogger) initSugaredLogger() {
+func (log *warpLogger) initSugaredLogger() {
 
-	if l.sugaredLogger == nil {
-		l.sugaredLogger = l.defLogger.Sugar()
+	if log.sugaredLogger == nil {
+		log.sugaredLogger = log.defLogger.Sugar()
 	}
 
 }
 
-func (l *warpLogger) updateLogger(logger *zap.Logger) {
+func (log *warpLogger) updateLogger(logger *zap.Logger) {
 
-	l.lock()
-	defer l.unlock()
+	_ = log.Sync()
 
-	_ = l.Sync()
+	log.defLogger = logger
 
-	l.defLogger = logger
-
-	if l.sugaredLogger != nil {
-		l.sugaredLogger = l.defLogger.Sugar()
+	if log.sugaredLogger != nil {
+		log.sugaredLogger = log.defLogger.Sugar()
 	}
 }
 
-func (l *warpLogger) lock() {
+func (log *warpLogger) lock() {
 
-	l.mu.Lock()
-	atomic.StoreUint32(&l._locked, 1)
-	l._lockWait.Add(1)
+	atomic.StoreUint32(&log._locked, 1)
 }
 
-func (l *warpLogger) unlock() {
+func (log *warpLogger) unlock() {
 
-	atomic.StoreUint32(&l._locked, 0)
-	l._lockWait.Done()
-	l.mu.Unlock()
+	atomic.StoreUint32(&log._locked, 0)
+	log._lockWait.Done()
+	log.mu.Unlock()
 
 }
 
-func (l *warpLogger) checkLock() {
+func (log *warpLogger) checkLock() {
 
-	if l.locked() {
-		l._lockWait.Wait()
+	if log.locked() {
+		log._lockWait.Wait()
 	}
 
 }
 
-func (l *warpLogger) locked() bool {
-	return atomic.LoadUint32(&l._locked) == 1
+func (log *warpLogger) locked() bool {
+	return atomic.LoadUint32(&log._locked) == 1
 }

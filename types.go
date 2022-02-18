@@ -51,13 +51,13 @@ type loggerFormat interface {
 type Logger interface {
 	loggerFields
 
+	Named(s string) Logger
+
+	With(fields ...Field) Logger
+
 	Sync() error
 
 	Sugar() SugaredLogger
-
-	Job(name string, kvs ...map[string]interface{}) *Job
-
-	EventEmitter() Emitter
 }
 
 type SugaredLogger interface {
@@ -111,8 +111,4 @@ type SugaredLogger interface {
 	Sync() error
 
 	Desugar() Logger
-
-	Job(name string, kvs ...map[string]interface{}) *Job
-
-	EventEmitter() Emitter
 }

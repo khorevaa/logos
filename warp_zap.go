@@ -8,15 +8,11 @@ import (
 
 var StackTraceLevelEnabler = zap.NewAtomicLevelAt(zapcore.PanicLevel)
 
-func newZapCore(config map[string]zapcore.Level, appenders map[string]*appender.Appender) zapcore.Core {
+func newZapCore(config map[string]zap.AtomicLevel, appenders map[string]*appender.Appender) zapcore.Core {
 
 	zcs := make([]zapcore.Core, 0)
 
 	for name, level := range config {
-
-		if level == OffLevel {
-			continue
-		}
 
 		if a, ok := appenders[name]; ok {
 			zcs = append(zcs, zapcore.NewCore(a.Encoder, a.Writer, level))

@@ -3,11 +3,12 @@ package console
 import (
 	"encoding/base64"
 	"fmt"
-	"go.uber.org/zap/buffer"
-	"go.uber.org/zap/zapcore"
 	"strconv"
 	"sync"
 	"time"
+
+	"go.uber.org/zap/buffer"
+	"go.uber.org/zap/zapcore"
 )
 
 var poolColoredEncoder = sync.Pool{
@@ -305,11 +306,11 @@ func (e *coloredEncoder) OpenNamespace(_ string) {
 }
 
 func (e *coloredEncoder) AppendDuration(val time.Duration) {
-	//cur := e.buf.Len()
-	//e.EncodeDuration(val, e)
-	//if cur == e.buf.Len() {
+	// cur := e.buf.Len()
+	// e.EncodeDuration(val, e)
+	// if cur == e.buf.Len() {
 	//	e.AppendInt64(int64(val))
-	//}
+	// }
 
 	e.appendColoredString(val.String(), e.scheme.Time)
 
